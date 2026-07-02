@@ -46,7 +46,7 @@ from mypy_boto3_glue.type_defs import (
 from dbt.adapters.athena import AthenaConnectionManager
 from dbt.adapters.athena.column import AthenaColumn
 from dbt.adapters.athena.config import get_boto3_config
-from dbt.adapters.athena.connections import AthenaCursor, AthenaError
+from dbt.adapters.athena.connections import AthenaAdapterResponse, AthenaCursor, AthenaError
 from dbt.adapters.athena.constants import LOGGER
 from dbt.adapters.athena.session import get_boto3_session_from_credentials
 from dbt.adapters.athena.exceptions import (
@@ -82,7 +82,6 @@ from dbt.adapters.athena.utils import (
 from dbt.adapters.base import ConstraintSupport, PythonJobHelper, available
 from dbt.adapters.base.impl import AdapterConfig
 from dbt.adapters.base.relation import BaseRelation, InformationSchema
-from dbt.adapters.contracts.connection import AdapterResponse
 from dbt.adapters.contracts.relation import RelationConfig
 from dbt.adapters.sql import SQLAdapter
 
@@ -1360,10 +1359,15 @@ class AthenaAdapter(SQLAdapter):
                 SkipArchive=skip_archive_table_version,
             )
 
-    def generate_python_submission_response(self, submission_result: Any) -> AdapterResponse:
+    def generate_python_submission_response(self, submission_result: Any) -> AthenaAdapterResponse:
         if not submission_result:
-            return AdapterResponse(_message="ERROR")
-        return AdapterResponse(_message="OK")
+            return AthenaAdapterResponse(_message="ERROR")
+        result = submission_result if isinstance(submission_result, dict) else {}
+        spark_session_id = result.get("SparkSessionId")
+        return AthenaAdapterResponse(
+            _message="OK",
+            spark_session_id=spark_session_id,
+        )
 
     @property
     def default_python_submission_method(self) -> str:
