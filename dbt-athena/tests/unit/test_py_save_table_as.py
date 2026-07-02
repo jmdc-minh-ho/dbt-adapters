@@ -53,6 +53,9 @@ def _render(
             region_name="us-east-1",
         ),
         "this": SimpleNamespace(schema=schema, identifier=this_identifier),
+        # spark_cross_account_catalog merge added a top-level config.get() in the
+        # template; tests render without dbt context so we stub config out.
+        "config": SimpleNamespace(get=lambda *_, **__: False),
     }
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(_MACRO_DIR),
